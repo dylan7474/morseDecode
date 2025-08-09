@@ -126,6 +126,7 @@ int displayMinFreq = 0;
 int displayMaxFreq = 6000; // New adjustable frequency display range, set to 6000Hz
 char decodedText[DECODED_BUFFER_SIZE] = {0};
 char currentMorse[32] = {0};
+int debugMode = 0; // Toggled by 'T' key for troubleshooting
 
 // Waterfall display buffer
 SDL_Color waterfallBuffer[WATERFALL_HEIGHT][WATERFALL_WIDTH];
@@ -253,6 +254,10 @@ void updateMorseDecoder(double *spectrum) {
         }
     }
 
+    if (debugMode) {
+        printf("Magnitude: %.2f, Signal State: %d, Dot Duration: %u\n", magnitude, isSignalPresent, dotDuration);
+    }
+    
     int currentSignalState = (magnitude * gain > squelchThreshold); // Threshold with gain and squelch
 
     if (currentSignalState && !isSignalPresent) {
@@ -388,6 +393,9 @@ int main(int argc, char *argv[]) {
                     case SDLK_PAGEDOWN:
                         displayMaxFreq = fmax(displayMinFreq + 500, displayMaxFreq - 500);
                         break;
+                    case SDLK_t:
+                        debugMode = !debugMode;
+                        break;
                     case SDLK_ESCAPE:
                         quit = 1;
                         break;
@@ -448,15 +456,19 @@ int main(int argc, char *argv[]) {
         snprintf(displayRangeText, sizeof(displayRangeText), "Display Range: %d - %d Hz (PgUp/PgDn)", displayMinFreq, displayMaxFreq);
         renderText(displayRangeText, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 2);
 
+        char debugStatus[64];
+        snprintf(debugStatus, sizeof(debugStatus), "Debug Mode: %s (T)", debugMode ? "ON" : "OFF");
+        renderText(debugStatus, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 3);
+        
         char morseText[64];
         snprintf(morseText, sizeof(morseText), "Current Morse: %s", currentMorse);
-        renderText(morseText, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 3);
+        renderText(morseText, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 4);
 
         char decodedLabel[64];
         snprintf(decodedLabel, sizeof(decodedLabel), "Decoded Text:");
-        renderText(decodedLabel, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 4);
+        renderText(decodedLabel, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 5);
 
-        renderText(decodedText, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 5);
+        renderText(decodedText, 10, WATERFALL_HEIGHT + 10 + FONT_SIZE * 6);
 
 
         SDL_RenderPresent(renderer);
