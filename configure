@@ -1,0 +1,55 @@
+#!/bin/sh
+# configure - simple dependency checker for Morse Decoder
+
+missing=0
+
+check_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo "Error: $1 not found." >&2
+        case "$1" in
+            gcc)
+                echo "Install GCC (e.g., sudo apt install build-essential)" >&2
+                ;;
+            sdl2-config)
+                echo "Install SDL2 development files (e.g., sudo apt install libsdl2-dev)" >&2
+                ;;
+            pkg-config)
+                echo "Install pkg-config (e.g., sudo apt install pkg-config)" >&2
+                ;;
+        esac
+        missing=1
+    fi
+}
+
+check_library() {
+    if ! pkg-config --exists "$1"; then
+        echo "Error: $1 not found." >&2
+        case "$1" in
+            SDL2_ttf)
+                echo "Install SDL2_ttf (e.g., sudo apt install libsdl2-ttf-dev)" >&2
+                ;;
+            fftw3)
+                echo "Install FFTW3 (e.g., sudo apt install libfftw3-dev)" >&2
+                ;;
+        esac
+        missing=1
+    fi
+}
+
+check_command gcc
+check_command sdl2-config
+check_command pkg-config
+
+if command -v pkg-config >/dev/null 2>&1; then
+    check_library SDL2_ttf
+    check_library fftw3
+else
+    echo "Skipping library checks because pkg-config is missing." >&2
+fi
+
+if [ "$missing" -eq 0 ]; then
+    echo "All dependencies appear to be installed."
+else
+    echo "Some dependencies are missing. Please install them and run configure again." >&2
+    exit 1
+fi
